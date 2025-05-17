@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Data artifacts
+data/
+warehouse/
+*.parquet
+
+# Jupyter
+**/.ipynb_checkpoints/
+
+# Python build
+__pycache__/

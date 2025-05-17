@@ -1,0 +1,30 @@
+[project]
+name = "abstracts_etl_platform"
+version = "0.1.0"
+description = "ETL, NLP, and Visualization toolkit for scientific-abstract PDFs"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=2.2",
+    "duckdb>=0.10",
+    "pyarrow>=15",
+    "PyMuPDF>=1.24",
+    "spacy>=3.7",
+    "scikit-learn>=1.5",
+    "gensim>=4.3",
+    "bertopic>=0.16",
+    "networkx>=3.2",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "plotly>=5.20",
+    "wordcloud>=1.9",
+    "pandera>=0.17",
+    "prefect>=2.16",
+    "pyyaml>=6.0",
+    "typer>=0.9",
+    "tqdm>=4.66",
+    "sentence-transformers>=2.6",
+    "optuna>=3.6"
+]
+
+[project.scripts]
+abstracts-cli = "cli.__main__:app"

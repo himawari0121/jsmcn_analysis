@@ -1,0 +1,12 @@
+header:
+  - name: "id"
+    pattern: "^【演題番号】(?P<id>\\d+)"
+  - name: "title"
+    pattern: "^【演題名】(?P<title>.+)$"
+  - name: "authors"
+    pattern: "^【著者】(?P<authors>.+)$"
+  - name: "affiliation"
+    pattern: "^【所属】(?P<affiliation>.+)$"
+  - name: "session"
+    pattern: "^【セッション】(?P<session>.+)$"
+splitter: "^\s*[-]{6,}\s*$"
