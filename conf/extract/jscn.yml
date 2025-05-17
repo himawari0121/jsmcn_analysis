@@ -9,4 +9,4 @@ header:
     pattern: "^【所属】(?P<affiliation>.+)$"
   - name: "session"
     pattern: "^【セッション】(?P<session>.+)$"
-splitter: "^\s*[-]{6,}\s*$"
+splitter: '^\s*[-]{6,}\s*$'

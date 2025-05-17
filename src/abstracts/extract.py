@@ -5,12 +5,43 @@
 from __future__ import annotations
 
 import re
-import json
 import pathlib as _pl
 from typing import Iterator, List, Dict, Any
-import yaml
 import pandas as pd
-from tqdm import tqdm
+
+
+def _parse_simple_yaml(text: str) -> Dict[str, Any]:
+    header: List[Dict[str, str]] = []
+    current: Dict[str, str] | None = None
+    cfg: Dict[str, Any] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        if line.startswith("header:"):
+            continue
+        if line.lstrip().startswith("- name:"):
+            if current:
+                header.append(current)
+            current = {"name": line.split(":", 1)[1].strip().strip('"')}
+        elif line.lstrip().startswith("pattern:") and current is not None:
+            val = line.split(":", 1)[1].strip().strip('"')
+            current["pattern"] = val.replace("\\\\", "\\")
+        elif line.startswith("splitter:"):
+            val = line.split(":", 1)[1].strip().strip('"')
+            cfg["splitter"] = val.replace("\\\\", "\\")
+    if current:
+        header.append(current)
+    cfg["header"] = header
+    return cfg
+
+
+def _load_rule(path: _pl.Path) -> Dict[str, Any]:
+    try:
+        import yaml
+    except ModuleNotFoundError:
+        return _parse_simple_yaml(path.read_text(encoding="utf-8"))
+    with path.open("r", encoding="utf-8") as fp:
+        return yaml.safe_load(fp)
 
 __all__ = ["Extractor", "parse_directory"]
 
@@ -20,8 +51,7 @@ class Extractor:
 
     def __init__(self, rule_path: _pl.Path | str):
         self.rule_path = _pl.Path(rule_path)
-        with self.rule_path.open("r", encoding="utf-8") as fp:
-            cfg = yaml.safe_load(fp)
+        cfg = _load_rule(self.rule_path)
         self.header_patterns = {
             h["name"]: re.compile(h["pattern"], re.MULTILINE)
             for h in cfg.get("header", [])
@@ -62,3 +92,23 @@ class Extractor:
             for r in recs:
                 r["year"] = year
         return recs
+
+    # ------------------------------------------------------------------
+    def parse_directory(self, txt_dir: _pl.Path | str) -> pd.DataFrame:
+        """Parse all `.txt files under a directory into a DataFrame."""
+        dir_path = _pl.Path(txt_dir)
+        records: list[dict[str, Any]] = []
+        for txt_file in sorted(dir_path.glob("*.txt")):
+            year_match = re.search(r"(\d{4})", txt_file.stem)
+            year = int(year_match.group(1)) if year_match else None
+            recs = self.parse_file(txt_file, year=year)
+            for r in recs:
+                r.setdefault("file", txt_file.name)
+            records.extend(recs)
+        return pd.DataFrame(records)
+
+
+def parse_directory(txt_dir: _pl.Path | str, rule: _pl.Path | str) -> pd.DataFrame:
+    """Convenience wrapper around :class:Extractor for one-off use."""
+    extractor = Extractor(rule)
+    return extractor.parse_directory(txt_dir)

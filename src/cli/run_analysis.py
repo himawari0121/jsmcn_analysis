@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pathlib as _pl
+import json
 import typer
 import duckdb as ddb
 import pandas as pd
