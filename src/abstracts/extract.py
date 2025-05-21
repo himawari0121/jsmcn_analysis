@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import pathlib as _pl
+from functools import lru_cache
 from typing import Iterator, List, Dict, Any
 import pandas as pd
 
@@ -22,12 +23,14 @@ def _parse_simple_yaml(text: str) -> Dict[str, Any]:
         if line.lstrip().startswith("- name:"):
             if current:
                 header.append(current)
-            current = {"name": line.split(":", 1)[1].strip().strip('"')}
+            current = {
+                "name": line.split(":", 1)[1].strip().strip("'\"")
+            }
         elif line.lstrip().startswith("pattern:") and current is not None:
-            val = line.split(":", 1)[1].strip().strip('"')
+            val = line.split(":", 1)[1].strip().strip("'\"")
             current["pattern"] = val.replace("\\\\", "\\")
         elif line.startswith("splitter:"):
-            val = line.split(":", 1)[1].strip().strip('"')
+            val = line.split(":", 1)[1].strip().strip("'\"")
             cfg["splitter"] = val.replace("\\\\", "\\")
     if current:
         header.append(current)
@@ -35,12 +38,15 @@ def _parse_simple_yaml(text: str) -> Dict[str, Any]:
     return cfg
 
 
-def _load_rule(path: _pl.Path) -> Dict[str, Any]:
+@lru_cache(maxsize=8)
+def _load_rule(path: str | _pl.Path) -> Dict[str, Any]:
+    """Load YAML rule file with a simple cache."""
+    p = _pl.Path(path)
     try:
         import yaml
     except ModuleNotFoundError:
-        return _parse_simple_yaml(path.read_text(encoding="utf-8"))
-    with path.open("r", encoding="utf-8") as fp:
+        return _parse_simple_yaml(p.read_text(encoding="utf-8"))
+    with p.open("r", encoding="utf-8") as fp:
         return yaml.safe_load(fp)
 
 __all__ = ["Extractor", "parse_directory"]
